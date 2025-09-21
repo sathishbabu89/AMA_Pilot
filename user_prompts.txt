@@ -1,0 +1,142 @@
+That’s a very good doubt 👍 — let’s walk through what will happen step by step with your current design.
+
+Your **flow works like this**:
+
+1. User enters a free-form prompt (e.g., “Build a React login page”).
+2. The **Manager Agent** (`manager_suggests_plan`) analyzes the text and outputs a JSON “plan” of which agents are needed.
+3. You then enforce rules (`enforce_stack_consistency`, `enforce_plan_structure`) so the plan sticks to the requested stacks.
+4. Based on the plan, you dynamically create CrewAI tasks for only the relevant agents.
+
+---
+
+### ✅ Example 1: Frontend Only
+
+**User prompt:**
+
+> “Create a login page using React and TailwindCSS.”
+
+**Manager output (plan):**
+
+```json
+[
+  {
+    "agent": "System Architect",
+    "task": "Design system architecture for a React-only frontend.",
+    "tools": ["React.js", "TailwindCSS"],
+    "plan": "Simple frontend app, no backend required."
+  },
+  {
+    "agent": "UI Developer",
+    "task": "Build the React UI with TailwindCSS.",
+    "tools": ["React.js", "TailwindCSS"],
+    "plan": "Provide project structure, code, and setup steps."
+  },
+  {
+    "agent": "QA / Testing Engineer",
+    "task": "Generate Jest test cases for React components.",
+    "tools": ["Jest", "React Testing Library"],
+    "plan": "Provide sample test files and run instructions."
+  }
+]
+```
+
+**Intercept:**
+
+* No backend agent is created.
+* Output = architecture + React project + frontend tests.
+
+---
+
+### ✅ Example 2: Backend Only
+
+**User prompt:**
+
+> “Build a REST API with FastAPI and PostgreSQL.”
+
+**Manager output (plan):**
+
+```json
+[
+  {
+    "agent": "System Architect",
+    "task": "Design system architecture for FastAPI backend with PostgreSQL.",
+    "tools": ["FastAPI", "PostgreSQL"],
+    "plan": "API only, no frontend required."
+  },
+  {
+    "agent": "Backend Developer",
+    "task": "Build FastAPI project structure and CRUD endpoints.",
+    "tools": ["FastAPI", "SQLAlchemy", "PostgreSQL"],
+    "plan": "Provide full backend skeleton and run instructions."
+  },
+  {
+    "agent": "QA / Testing Engineer",
+    "task": "Generate pytest test cases for FastAPI endpoints.",
+    "tools": ["pytest", "httpx"],
+    "plan": "Provide example test cases and run instructions."
+  }
+]
+```
+
+**Intercept:**
+
+* No UI Developer agent.
+* Output = architecture + backend project + backend tests.
+
+---
+
+### ✅ Example 3: Full Stack
+
+**User prompt:**
+
+> “Build a shopping cart with Angular frontend and ASP.NET Core backend.”
+
+**Manager output (plan):**
+
+```json
+[
+  {
+    "agent": "System Architect",
+    "task": "Design architecture for Angular frontend and ASP.NET Core backend with SQL Server.",
+    "tools": ["Angular", "ASP.NET Core", "SQL Server"],
+    "plan": "Full stack architecture with API integration."
+  },
+  {
+    "agent": "UI Developer",
+    "task": "Generate Angular UI project with shopping cart.",
+    "tools": ["Angular", "TypeScript"],
+    "plan": "Provide folder structure, components, and setup steps."
+  },
+  {
+    "agent": "Backend Developer",
+    "task": "Generate ASP.NET Core project with REST endpoints.",
+    "tools": ["ASP.NET Core", "Entity Framework", "SQL Server"],
+    "plan": "Provide controllers, models, and DB setup."
+  },
+  {
+    "agent": "QA / Testing Engineer",
+    "task": "Generate Angular unit tests and ASP.NET Core xUnit tests.",
+    "tools": ["Jasmine", "xUnit"],
+    "plan": "Provide test folder structure and run guide."
+  }
+]
+```
+
+**Intercept:**
+
+* Both UI + Backend agents run.
+* QA generates tests for both layers.
+
+---
+
+### 📝 In short:
+
+* **Frontend only request → UI Dev + QA**
+* **Backend only request → Backend Dev + QA**
+* **Full stack request → UI + Backend + QA**
+* **System Architect** is always included.
+* **QA** is always appended at the end.
+
+---
+
+👉 Do you want me to show you exactly how to **force the Manager to always include QA when either frontend or backend exists**, so you don’t risk it skipping?
